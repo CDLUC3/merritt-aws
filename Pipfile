@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+jupyterlab = "*"
+pandas = "*"
+numpy = "*"
+mysql-connector-python = "*"
+mysql-connector = "*"
+matplotlib = "*"
+scipy = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
