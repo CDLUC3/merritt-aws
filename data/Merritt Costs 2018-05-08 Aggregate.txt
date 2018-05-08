@@ -1,0 +1,19 @@
+service	usage_type	item_description	unblended_cost
+mrt	USW2-EBS:VolumeUsage.gp2	$0.10 per GB-month of General Purpose SSD (gp2) provisioned storage - US West (Oregon)	1861
+mrt	USW2-EBS:SnapshotUsage	$0.05 per GB-Month of snapshot data stored - US West (Oregon)	1290.85774
+mrt	USW2-BoxUsage:c4.xlarge	$0.199 per On Demand Linux c4.xlarge Instance Hour	909.0164121
+mrt	USW1-EBS:SnapshotUsage	$0.055 per GB-Month of snapshot data stored - US West (Northern California)	496.9803857
+mrt	USW2-EBS:VolumeUsage	$0.05 per GB-month of Magnetic provisioned storage - US West (Oregon)	285.6999992
+mrt	USW2-BoxUsage:m4.large	$0.10 per On Demand Linux m4.large Instance Hour	266.4
+mrt	USW2-BoxUsage:t2.small	$0.0232 per On Demand Linux t2.small Instance Hour	252.8814542
+mrt	USW2-BoxUsage:t2.medium	$0.0464 per On Demand Linux t2.medium Instance Hour	245.3582507
+mrt	USW2-BoxUsage:m4.xlarge	$0.20 per On Demand Linux m4.xlarge Instance Hour	144
+mrt	USW2-Multi-AZUsage:db.m4.large	$0.350 per RDS db.m4.large Multi-AZ instance hour (or partial hour) running MySQL	131.25
+mrt	USW2-RDS:Multi-AZ-GP2-Storage	$0.230 per GB-month of provisioned GP2 storage for Multi-AZ deployments	92.00000002
+mrt	USW2-DataTransfer-Out-Bytes	$0.090 per GB - first 10 TB / month data transfer out beyond the global free tier	78.80170092
+mrt	USW2-BoxUsage:c4.large	$0.1 per On Demand Linux c4.large Instance Hour	72
+mrt	USW2-DataTransfer-Regional-Bytes	$0.010 per GB - regional data transfer - in/out/between EC2 AZs or using elastic IPs or ELB	19.4821212
+mrt	USW2-LoadBalancerUsage	$0.0225 per Application LoadBalancer-hour (or partial hour)	16.2
+mrt	USW2-RDS:GP2-Storage	$0.115 per GB-month of provisioned GP2 storage	11.49999998
+mrt	USW2-EBS:VolumeIOUsage	$0.05 per 1 million I/O requests - US West (Oregon)	5.73327235
+mrt	USW2-LCUUsage	$0.008 per used Application load balancer capacity unit-hour (or partial hour)	1.705194805
