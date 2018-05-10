@@ -30,29 +30,56 @@ def __read_costs(tsv_path: str = 'data/Merritt Costs 2018-05-08.txt'):
             ("service", service),
             ("server", server),
             ("device", device),
-            ("zone", zone),
+            ("cost", cost),
+            ("quantity", quantity),
+            ("unit", unit),
+            ("unit_cost", unit_cost),
             ("aws_service", aws_service),
             ("usage_type", usage_type),
-            ("unit_cost", unit_cost),
-            ("unit", unit),
-            ("quantity", quantity),
-            ("cost", cost),
+            ("zone", zone),
         ])
     )
 
-    return df.sort_values(by=['env', 'service', 'server', 'device'])
+    index_cols = ['service', 'env', 'server', 'device']
+    return df.sort_values(by=index_cols).set_index(index_cols)
 
 
 costs = __read_costs()
-environments = np.unique(costs['env'])
-services = np.unique(costs['service'])
-costs_by_environment = {env: costs.loc[costs['env'] == env] for env in environments}
-costs_by_service = {service: costs.loc[costs['service'] == service] for service in services}
 
-costs_by_env_and_service = {}
-for env in environments:
-    env_costs = costs_by_environment[env]
-    env_costs_by_service = {}
-    for service in services:
-        env_costs_by_service[service] = env_costs.loc[env_costs['service'] == service]
-    costs_by_env_and_service[env] = env_costs_by_service
+# supertotal = 0
+# for service in services:
+#     display(Markdown("---\n# Service: %s" % service))
+#     svc_total = 0
+#     for env in environments:
+#         env_svc_costs = costs_by_env_and_service[env][service]
+#         if not env_svc_costs.empty:
+#             display(Markdown("## Environment: %s" % env))
+#             display(env_svc_costs)
+#             total = env_svc_costs['cost'].sum()
+#             display(Markdown("### Total: $%s" % np.round(total, 2)))
+#             svc_total = svc_total + total
+#     display(Markdown("## Total: $%s" % np.round(svc_total, 2)))
+#     supertotal = supertotal + svc_total
+#
+# display(Markdown("# Total: $%s" % np.round(supertotal, 2)))
+
+# class Costs:
+#
+#
+#
+#     def __init__(self, costs: pd.DataFrame):
+#         self.costs = costs
+#         self.environments = np.unique(costs['env'])
+#         self.services = np.unique(costs['service'])
+#
+#         costs_by_env_and_service = {}
+#         for env in self.environments:
+#             env_costs_by_service = {}
+#             for service in self.services:
+#                 env_costs_by_service[service] = costs.loc[
+#                     costs['env'] == env
+#                     & costs['service'] == service
+#                 ]
+#             costs_by_env_and_service[env] = env_costs_by_service
+#
+#         self.costs_by_env_and_service = costs_by_env_and_service
