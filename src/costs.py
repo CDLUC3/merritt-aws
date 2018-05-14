@@ -59,11 +59,12 @@ def display_md(md_str: str):
 
 
 def display_summary(service):
-    display_md('### Service: %s' % service)
+    display_md('### service: %s' % service)
+    display_md('[(back to TOC)](#service-toc)')
 
     s_costs = costs_for_service(service)
     s_total_cost = total_cost(s_costs)
-    display_md('###### Total cost: $%s' % s_total_cost)
+    display_md('###### total cost: $%s' % s_total_cost)
 
     plot_costs_by_usage(s_costs)
     plt.show()
@@ -75,44 +76,37 @@ def display_summary(service):
         se_total_cost = total_cost(se_costs)
         if not service == '':
             display_md('#### %s %s' % (service, env))
-            display_md('###### Total cost for %s %s: $%s' % (service, env, se_total_cost))
+            display_md('###### total cost for %s %s: $%s' % (service, env, se_total_cost))
         for server in servers_for(service, env):
             ses_costs = costs_for_server(server)
             ses_total_cost = total_cost(ses_costs)
             if not server == '':
                 display_md('##### %s' % server)
-                display_md('###### Total cost for %s: $%s' % (server, ses_total_cost))
+                display_md('###### total cost for %s: $%s' % (server, ses_total_cost))
             ses_summary = summary_table_for(ses_costs)
             display(ses_summary)
     display_md('---')
 
 
-def plot_costs_by_usage(df: pd.DataFrame):
-    usage_costs = df.groupby(['usage_type'])['cost'].sum().to_frame()
-    usage_costs.sort_values('cost', inplace=True)
-    usage_costs.rename(index=str, columns={'usage_type': 'Usage Type', 'cost': 'Cost ($)'})
-    plot = usage_costs.plot.barh(
+def plot_costs_by(col: str, df: pd.DataFrame = costs):
+    grouped = df.groupby([col])['cost'].sum().to_frame()
+    grouped.sort_values('cost', inplace=True)
+    grouped.plot.barh(
         logy=False,
         width=1.0,
         facecolor='#1295d8',
         edgecolor='#005581',
         figsize=(7.5, 7.5)
     )
-    return plot
+    plt.show()
+
+
+def plot_costs_by_usage(df: pd.DataFrame):
+    plot_costs_by('usage_type', df)
 
 
 def plot_costs_by_service(df: pd.DataFrame):
-    service_costs = df.groupby(['service'])['cost'].sum().to_frame()
-    service_costs.sort_values('cost', inplace=True)
-    service_costs.rename(index=str, columns={'service': 'Service', 'cost': 'Cost ($)'})
-    plot = service_costs.plot.barh(
-        logy=False,
-        width=1.0,
-        facecolor='#1295d8',
-        edgecolor='#005581',
-        figsize=(7.5, 7.5)
-    )
-    return plot
+    plot_costs_by('service', df)
 
 
 def summary_table_for(df: pd.DataFrame):
@@ -153,18 +147,20 @@ def costs_for_server_and_aws_service(server, aws_service):
     s_costs = costs_for_server(server)
     return s_costs.loc[s_costs['aws_service'] == aws_service]
 
-# TODO: roll up costs by sevice/server/env/device/usage_type and display
-# TODO:   1. the whole list in a pretty way
-# TODO:   2. summary charts for each
+def services_by_cost():
+    grouped = costs.groupby(['service'])['cost'].sum().to_frame()
+    grouped.sort_values('cost', ascending=False, inplace=True)
+    return list(grouped.index)
 
+def display_service_toc():
+    display_md('<a name="service-toc"></a>')
+    display_md('## Breakdown by service')
 
-# for service in services:
-#     s_costs = costs_for_service(service)
-#     s_total_cost = total_cost(s_costs)
-#     for env in envs:
-#         se_costs = costs_for_service_and_env(service, env)
-#         se_total_cost = total_cost(se_costs)
-#         for server in servers_for(service, env):
-#             ses_costs = costs_for_server(server)
-#             ses_total_cost = total_cost(ses_costs)
-#             display(ses_costs)
+    toc_md = "| service | cost |\n"
+    toc_md += "| :------ | ---: |\n"
+    for service in services_by_cost():
+        s_costs = costs_for_service(service)
+        s_total_cost = total_cost(s_costs)
+        toc_md += ("| [%s](#%s) | \\$%s |\n" % (service, service, s_total_cost))
+    display_md(toc_md)
+
