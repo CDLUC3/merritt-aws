@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from IPython import display as ipd
 from IPython.display import display
 
@@ -20,7 +21,7 @@ def __read_costs(tsv_path: str = 'data/Merritt Costs 2018-05-08.txt'):
     service = server.str.extract('-(?:mrt)?([a-z]+)', expand=False).fillna('')
     device = __tsv_raw['name'].str.extract('(swap|(?:/dev/[a-z]+))', expand=False).fillna('')
 
-    unit_cost = __description_raw.str.extract('\\$([0-9.]+)', expand=False).astype(float)
+    unit_cost = __description_raw.str.extract('$([0-9.]+)', expand=False).astype(float)
     unit = __description_raw.str.lower().str.extract(
         '(gb-month|instance hour|gb.*transfer|million i/o requests|load[^(]*hour)', expand=False).fillna('')
     cost = __tsv_raw['unblended_cost']
@@ -67,9 +68,16 @@ def display_summary(service):
     s_total_cost = total_cost(s_costs)
     display_md('##### Total cost: $%s' % s_total_cost)
 
-    # TODO: figure out where extra ### is coming from
+    s_summary=summary_table_for(s_costs)
+    display(s_summary)
+
+    plot = plot_costs_by_usage(s_costs)
+    plt.show()
+
     for env in envs:
         se_costs = costs_for_service_and_env(service, env)
+        if se_costs.empty:
+            continue
         se_total_cost = total_cost(se_costs)
         if not service == '':
             display_md('### %s' % env)
@@ -79,10 +87,25 @@ def display_summary(service):
             ses_total_cost = total_cost(ses_costs)
             if not server == '':
                 display_md('#### %s' % server)
-                display_md('#### Total cost for %s: $%s' % (server, ses_total_cost))
+                display_md('##### Total cost for %s: $%s' % (server, ses_total_cost))
             ses_summary = summary_table_for(ses_costs)
             display(ses_summary)
+            plot = plot_costs_by_usage(ses_costs)
+            plt.show()
 
+def plot_costs_by_usage(df: pd.DataFrame):
+    usage_costs = df.groupby(['usage_type'])['cost'].sum()
+    plot = usage_costs.plot.barh(
+        x='Usage Type',
+        y='Cost ($)',
+        logy=False,
+        width=1.0,
+        facecolor='#1295d8',
+        edgecolor='#005581',
+        figsize=(9, 9)
+    )
+    return plot
+            
 
 def summary_table_for(df: pd.DataFrame):
     sum = pd.DataFrame(data={'aws_service': df['aws_service']})
@@ -90,7 +113,7 @@ def summary_table_for(df: pd.DataFrame):
     sum['usage_type'] = df['usage_type']
     sum['cost'] = df['cost'].map(lambda x: "$%s" % np.round(x, 2))
     sum['basis'] = df.apply(
-        (lambda row: "%s %s at $%s ea." % (row['quantity'], row['unit'], np.round(row['unit_cost'], 2))),
+        (lambda row: "%s %s at $%s ea." % (np.round(row['quantity'], 2), row['unit'], np.round(row['unit_cost'], 2))),
         axis=1
     )
     return sum.reindex() # TODO: fix this
