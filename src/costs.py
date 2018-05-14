@@ -21,7 +21,7 @@ def __read_costs(tsv_path: str = 'data/Merritt Costs 2018-05-08.txt'):
     service = server.str.extract('-(?:mrt)?([a-z]+)', expand=False).fillna('')
     device = __tsv_raw['name'].str.extract('(swap|(?:/dev/[a-z]+))', expand=False).fillna('')
 
-    unit_cost = __description_raw.str.extract('$([0-9.]+)', expand=False).astype(float)
+    unit_cost = __description_raw.str.extract('\\$([0-9.]+)', expand=False).astype(float)
     unit = __description_raw.str.lower().str.extract(
         '(gb-month|instance hour|gb.*transfer|million i/o requests|load[^(]*hour)', expand=False).fillna('')
     cost = __tsv_raw['unblended_cost']
@@ -67,9 +67,6 @@ def display_summary(service):
     s_costs = costs_for_service(service)
     s_total_cost = total_cost(s_costs)
     display_md('##### Total cost: $%s' % s_total_cost)
-
-    s_summary=summary_table_for(s_costs)
-    display(s_summary)
 
     plot = plot_costs_by_usage(s_costs)
     plt.show()
