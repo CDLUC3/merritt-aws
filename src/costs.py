@@ -1,8 +1,8 @@
 from collections import OrderedDict
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from IPython import display as ipd
 from IPython.display import display
 
@@ -14,11 +14,11 @@ def __read_costs(tsv_path: str = 'data/Merritt Costs 2018-05-08.txt'):
 
     zone = __usage_type_raw.str.extract('^(US[A-Z][0-9])', expand=False)
     aws_service = __usage_type_raw.str.extract('-([A-Za-z]+)', expand=False)
-    usage_type = __usage_type_raw.str.extract('-[A-Za-z]+[-:](.+)', expand=False).fillna('')
+    usage_type = __usage_type_raw.str.extract('-[A-Za-z]+[-:](.+)', expand=False).fillna('Other')
 
     server = __tsv_raw['name'].str.extract('^(uc3-[a-z0-9-]+)', expand=False).fillna('')
     env = server.str.extract('uc3-[a-z0-9]+-([a-z]+)', expand=False).fillna('')
-    service = server.str.extract('-(?:mrt)?([a-z]+)', expand=False).fillna('')
+    service = server.str.extract('-(?:mrt)?([a-z]+)', expand=False).fillna('other')
     device = __tsv_raw['name'].str.extract('(swap|(?:/dev/[a-z]+))', expand=False).fillna('')
 
     unit_cost = __description_raw.str.extract('\\$([0-9.]+)', expand=False).astype(float)
@@ -59,16 +59,13 @@ def display_md(md_str: str):
 
 
 def display_summary(service):
-    if service == '':
-        display_md('## Misc')
-    else:
-        display_md('## %s' % service)
+    display_md('### Service: %s' % service)
 
     s_costs = costs_for_service(service)
     s_total_cost = total_cost(s_costs)
-    display_md('##### Total cost: $%s' % s_total_cost)
+    display_md('###### Total cost: $%s' % s_total_cost)
 
-    plot = plot_costs_by_usage(s_costs)
+    plot_costs_by_usage(s_costs)
     plt.show()
 
     for env in envs:
@@ -77,32 +74,46 @@ def display_summary(service):
             continue
         se_total_cost = total_cost(se_costs)
         if not service == '':
-            display_md('### %s' % env)
-            display_md('##### Total cost for %s %s: $%s' % (service, env, se_total_cost))
+            display_md('#### %s %s' % (service, env))
+            display_md('###### Total cost for %s %s: $%s' % (service, env, se_total_cost))
         for server in servers_for(service, env):
             ses_costs = costs_for_server(server)
             ses_total_cost = total_cost(ses_costs)
             if not server == '':
-                display_md('#### %s' % server)
-                display_md('##### Total cost for %s: $%s' % (server, ses_total_cost))
+                display_md('##### %s' % server)
+                display_md('###### Total cost for %s: $%s' % (server, ses_total_cost))
             ses_summary = summary_table_for(ses_costs)
             display(ses_summary)
-            plot = plot_costs_by_usage(ses_costs)
-            plt.show()
+    display_md('---')
+
 
 def plot_costs_by_usage(df: pd.DataFrame):
-    usage_costs = df.groupby(['usage_type'])['cost'].sum()
+    usage_costs = df.groupby(['usage_type'])['cost'].sum().to_frame()
+    usage_costs.sort_values('cost', inplace=True)
+    usage_costs.rename(index=str, columns={'usage_type': 'Usage Type', 'cost': 'Cost ($)'})
     plot = usage_costs.plot.barh(
-        x='Usage Type',
-        y='Cost ($)',
         logy=False,
         width=1.0,
         facecolor='#1295d8',
         edgecolor='#005581',
-        figsize=(9, 9)
+        figsize=(7.5, 7.5)
     )
     return plot
-            
+
+
+def plot_costs_by_service(df: pd.DataFrame):
+    service_costs = df.groupby(['service'])['cost'].sum().to_frame()
+    service_costs.sort_values('cost', inplace=True)
+    service_costs.rename(index=str, columns={'service': 'Service', 'cost': 'Cost ($)'})
+    plot = service_costs.plot.barh(
+        logy=False,
+        width=1.0,
+        facecolor='#1295d8',
+        edgecolor='#005581',
+        figsize=(7.5, 7.5)
+    )
+    return plot
+
 
 def summary_table_for(df: pd.DataFrame):
     sum = pd.DataFrame(data={'aws_service': df['aws_service']})
@@ -113,7 +124,7 @@ def summary_table_for(df: pd.DataFrame):
         (lambda row: "%s %s at $%s ea." % (np.round(row['quantity'], 2), row['unit'], np.round(row['unit_cost'], 2))),
         axis=1
     )
-    return sum.reindex() # TODO: fix this
+    return sum.reindex()  # TODO: fix this
 
 
 def total_cost(df: pd.DataFrame):
