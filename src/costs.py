@@ -17,7 +17,7 @@ def __read_costs(tsv_path: str = 'data/Merritt Costs 2018-05-08.txt'):
     usage_type = __usage_type_raw.str.extract('-[A-Za-z]+[-:](.+)', expand=False).fillna('Other')
 
     server = __tsv_raw['name'].str.extract('^(uc3-[a-z0-9-]+)', expand=False).fillna('')
-    env = server.str.extract('uc3-[a-z0-9]+-([a-z]+)', expand=False).fillna('')
+    env = server.str.extract('uc3-[a-z0-9]+-([a-z]+)', expand=False).fillna('n/a')
     service = server.str.extract('-(?:mrt)?([a-z]+)', expand=False).fillna('other')
     device = __tsv_raw['name'].str.extract('(swap|(?:/dev/[a-z]+))', expand=False).fillna('')
 
