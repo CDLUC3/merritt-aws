@@ -6,6 +6,27 @@ import pandas as pd
 from IPython import display as ipd
 from IPython.display import display
 
+__env_short_to_long = OrderedDict([
+    ('n/a', 'n/a'),
+    ('prd', 'production'),
+    ('stg', 'stage'),
+    ('dev', 'development')
+])
+
+
+__env_names = list(__env_short_to_long.values())
+
+def __env_long(env_short):
+    if env_short in __env_short_to_long:
+        return __env_short_to_long[env_short]
+    return env_short
+
+# sort environments from prod to dev
+def __env_sort_key(env_long):
+    if env_long in __env_names:
+        return "%s %s" % (__env_names.index(env_long), env_long)
+    return env_long
+
 
 def __read_costs(tsv_path: str = 'data/Merritt Costs 2018-05-08.txt'):
     __tsv_raw = pd.read_csv(tsv_path, sep='\t', na_filter=False, index_col=False)
@@ -17,7 +38,8 @@ def __read_costs(tsv_path: str = 'data/Merritt Costs 2018-05-08.txt'):
     usage_type = __usage_type_raw.str.extract('-[A-Za-z]+[-:](.+)', expand=False).fillna('Other')
 
     server = __tsv_raw['name'].str.extract('^(uc3-[a-z0-9-]+)', expand=False).fillna('')
-    env = server.str.extract('uc3-[a-z0-9]+-([a-z]+)', expand=False).fillna('n/a')
+    __env_short: pd.Series = server.str.extract('uc3-[a-z0-9]+-([a-z]+)', expand=False).fillna('n/a')
+    env = __env_short.map(__env_long)
     service = server.str.extract('-(?:mrt)?([a-z]+)', expand=False).fillna('other')
     device = __tsv_raw['name'].str.extract('(swap|(?:/dev/[a-z]+))', expand=False).fillna('')
 
@@ -50,7 +72,7 @@ def __read_costs(tsv_path: str = 'data/Merritt Costs 2018-05-08.txt'):
 costs = __read_costs()
 
 services = np.unique(costs['service'])
-envs = np.unique(costs['env'])
+envs = sorted(np.unique(costs['env']), key=__env_sort_key)
 aws_services = np.unique(costs['aws_service'])
 
 
@@ -64,7 +86,7 @@ def display_summary(service):
 
     s_costs = costs_for_service(service)
     s_total_cost = total_cost(s_costs)
-    display_md('###### total cost: $%s' % s_total_cost)
+    display_md('total cost: **$%s**' % s_total_cost)
 
     plot_costs_by_usage(s_costs)
     plt.show()
@@ -76,13 +98,13 @@ def display_summary(service):
         se_total_cost = total_cost(se_costs)
         if not service == '':
             display_md('#### %s %s' % (service, env))
-            display_md('###### total cost for %s %s: $%s' % (service, env, se_total_cost))
+            display_md('total cost for %s %s: **$%s**' % (service, env, se_total_cost))
         for server in servers_for(service, env):
             ses_costs = costs_for_server(server)
             ses_total_cost = total_cost(ses_costs)
             if not server == '':
                 display_md('##### %s' % server)
-                display_md('###### total cost for %s: $%s' % (server, ses_total_cost))
+                display_md('total cost for %s: **$%s**' % (server, ses_total_cost))
             ses_summary = summary_table_for(ses_costs)
             display(ses_summary)
     display_md('---')
@@ -147,10 +169,12 @@ def costs_for_server_and_aws_service(server, aws_service):
     s_costs = costs_for_server(server)
     return s_costs.loc[s_costs['aws_service'] == aws_service]
 
+
 def services_by_cost():
     grouped = costs.groupby(['service'])['cost'].sum().to_frame()
     grouped.sort_values('cost', ascending=False, inplace=True)
     return list(grouped.index)
+
 
 def display_service_toc():
     display_md('<a name="service-toc"></a>')
@@ -163,4 +187,3 @@ def display_service_toc():
         s_total_cost = total_cost(s_costs)
         toc_md += ("| [%s](#%s) | \\$%s |\n" % (service, service, s_total_cost))
     display_md(toc_md)
-
