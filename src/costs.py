@@ -137,12 +137,14 @@ def summary_table_for(df: pd.DataFrame):
     sum = pd.DataFrame(data={'aws_service': df['aws_service']})
     sum['device'] = df['device']
     sum['usage_type'] = df['usage_type']
-    sum['cost'] = df['cost'].map(lambda x: "$%s" % np.round(x, 2))
+    sum['cost'] = df['cost']
     sum['basis'] = df.apply(
         (lambda row: "%s %s at $%s ea." % (np.round(row['quantity'], 2), row['unit'], np.round(row['unit_cost'], 2))),
         axis=1
     )
-    return sum.reindex()  # TODO: fix this
+    sum.sort_values('cost', ascending=False, inplace=True)
+    sum['cost'] = sum['cost'].map(lambda x: "$%s" % np.round(x, 2))
+    return sum.reset_index(drop=True)
 
 
 def total_cost(df: pd.DataFrame):
