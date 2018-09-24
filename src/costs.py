@@ -3,6 +3,7 @@ from collections import OrderedDict
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import re
 from IPython import display as ipd
 from IPython.display import display
 
@@ -77,7 +78,8 @@ aws_services = np.unique(costs['aws_service'])
 
 
 def display_md(md_str: str):
-    display(ipd.Markdown(md_str))
+    escaped_str = re.sub('(?<!\\\\)\$', '\$', md_str)
+    display(ipd.Markdown(escaped_str))
 
 
 def display_summary(service):
